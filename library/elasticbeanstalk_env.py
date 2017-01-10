@@ -363,7 +363,10 @@ def main():
             env = wait_for(ebs, app_name, env_name, wait_timeout, status_is_ready)
             result = dict(changed=True, env=env)
         except ClientError, e:
-            if 'Environment %s already exists' % env_name in e.message:
+            env = describe_env(ebs, app_name, env_name)
+            if 'Environment %s already exists' % env_name in e.message and env is None:
+                result = dict(failed=True, output='Environment %s already exists in another application' % env_name)
+            elif 'Environment %s already exists' % env_name in e.message:
                 update = True
             else:
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
